@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SnapLedger — Login</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#080B14;color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{width:100%;max-width:400px;background:#0F1520;border:1px solid #1E2A40;border-radius:16px;padding:36px 32px;}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+.logo-icon{width:48px;height:48px;background:#3B82F6;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;box-shadow:0 0 24px rgba(59,130,246,.4);}
+.logo-text h1{font-size:20px;font-weight:800;}
+.logo-text p{font-size:12px;color:#64748B;margin-top:2px;}
+.field{margin-bottom:18px;}
+label{display:block;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:6px;}
+input{width:100%;background:#151D2E;border:1px solid #1E2A40;border-radius:8px;
+  padding:12px 14px;color:#F1F5F9;font-size:15px;outline:none;transition:border .2s;}
+input:focus{border-color:#3B82F6;}
+input::placeholder{color:#334155;}
+.btn{width:100%;background:#3B82F6;color:white;border:none;border-radius:8px;
+  padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s;}
+.btn:active{opacity:.85;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.err{color:#EF4444;font-size:13px;margin-top:10px;text-align:center;min-height:20px;}
+.footer{text-align:center;margin-top:24px;font-size:11px;color:#334155;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">📄</div>
+    <div class="logo-text">
+      <h1>SnapLedger</h1>
+      <p>AI Document Intelligence</p>
+    </div>
+  </div>
+  <div class="field">
+    <label>Company Code</label>
+    <input id="company-code" type="text" placeholder="e.g. PHONES2026" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+  </div>
+  <div class="field">
+    <label>Username</label>
+    <input id="username" type="text" placeholder="Your username">
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()">
+  </div>
+  <button class="btn" id="btn-login" onclick="doLogin()">Sign In</button>
+  <div class="err" id="err"></div>
+  <div class="footer">SnapLedger © 2026 — Scan smarter, not harder.</div>
+</div>
+<script>
+async function doLogin() {
+  const btn  = document.getElementById("btn-login");
+  const err  = document.getElementById("err");
+  const code = document.getElementById("company-code").value.trim();
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  if (!code || !user || !pass) { err.textContent = "All fields required."; return; }
+  btn.disabled = true; btn.textContent = "Signing in..."; err.textContent = "";
+  try {
+    const r    = await fetch("/api/auth/login", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({company_code: code, username: user, password: pass})
+    });
+    const data = await r.json();
+    if (data.success) { window.location.href = "/app"; }
+    else { err.textContent = data.error || "Login failed."; }
+  } catch(e) { err.textContent = "Network error. Try again."; }
+  btn.disabled = false; btn.textContent = "Sign In";
+}
+</script>
+</body>
+</html>

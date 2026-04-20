@@ -1,0 +1,24 @@
+{
+  "name": "SnapLedger",
+  "short_name": "SnapLedger",
+  "description": "AI Document Intelligence — scan receipts and invoices instantly",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#080B14",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
