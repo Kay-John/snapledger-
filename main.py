@@ -81,9 +81,11 @@ def scan_document():
 
         from db import get_supabase
         sb = get_supabase()
+        category = data.get("category", "purchase")
         doc_r = sb.table("documents").insert({
             "company_code":   company_code,
             "doc_type":       extracted.get("doc_type", "other"),
+            "category":       category,
             "supplier_name":  extracted.get("supplier_name"),
             "doc_date":       extracted.get("doc_date"),
             "doc_number":     extracted.get("doc_number"),
@@ -196,19 +198,69 @@ def apply_dictionary(items, company_code):
 def list_documents():
     if not session.get("logged_in"):
         return jsonify({"error": "unauthorized"}), 401
-    q     = request.args.get("q", "").strip()
-    limit = int(request.args.get("limit", 50))
+    q        = request.args.get("q", "").strip()
+    limit    = int(request.args.get("limit", 50))
+    category = request.args.get("category", "").strip()
     try:
         from db import get_supabase
         sb = get_supabase()
         cc = session["company_code"]
         qb = sb.table("documents").select(
-            "id,doc_type,supplier_name,doc_date,doc_number,total_amount,currency,created_at"
+            "id,doc_type,category,supplier_name,doc_date,doc_number,total_amount,currency,created_at"
         ).eq("company_code", cc).order("created_at", desc=True).limit(limit)
         if q:
             qb = qb.ilike("supplier_name", f"%{q}%")
+        if category:
+            qb = qb.eq("category", category)
         return jsonify(qb.execute().data or [])
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/documents/manual", methods=["POST"])
+def manual_entry():
+    if not session.get("logged_in"):
+        return jsonify({"error": "unauthorized"}), 401
+    data         = request.json or {}
+    company_code = session["company_code"]
+    try:
+        from db import get_supabase
+        sb = get_supabase()
+        doc_r = sb.table("documents").insert({
+            "company_code":  company_code,
+            "doc_type":      data.get("doc_type", "other"),
+            "category":      data.get("category", "purchase"),
+            "supplier_name": data.get("supplier_name", "").strip() or None,
+            "doc_date":      data.get("doc_date") or None,
+            "doc_number":    data.get("doc_number", "").strip() or None,
+            "total_amount":  data.get("total_amount") or None,
+            "currency":      data.get("currency", "UGX"),
+            "notes":         data.get("notes", ""),
+            "image_data":    None,
+            "raw_extraction": None,
+        }).execute()
+        doc_id = doc_r.data[0]["id"] if doc_r.data else None
+        items  = data.get("items", [])
+        if doc_id:
+            for item in items:
+                desc = (item.get("product_name") or "").strip()
+                if not desc:
+                    continue
+                items_mapped = apply_dictionary([{"description": desc, "quantity": item.get("quantity"), "unit": item.get("unit"), "unit_price": item.get("unit_price"), "total_price": item.get("total_price")}], company_code)
+                mapped = items_mapped[0] if items_mapped else {}
+                sb.table("doc_items").insert({
+                    "document_id":           doc_id,
+                    "company_code":          company_code,
+                    "supplier_product_name": desc,
+                    "our_product_name":      mapped.get("our_name") or desc,
+                    "quantity":              item.get("quantity"),
+                    "unit":                  item.get("unit"),
+                    "unit_price":            item.get("unit_price"),
+                    "total_price":           item.get("total_price"),
+                    "needs_review":          mapped.get("needs_review", False),
+                }).execute()
+        return jsonify({"success": True, "document_id": doc_id})
+    except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/documents/<doc_id>", methods=["GET"])
@@ -335,16 +387,18 @@ def get_stats():
         cc    = session["company_code"]
         today = date.today().isoformat()
         month = date.today().replace(day=1).isoformat()
-        docs  = sb.table("documents").select("id,doc_type,total_amount,created_at").eq("company_code", cc).execute().data or []
+        docs  = sb.table("documents").select("id,doc_type,category,total_amount,created_at").eq("company_code", cc).execute().data or []
         pending = sb.table("doc_items").select("id").eq("company_code", cc).eq("needs_review", True).execute().data or []
-        today_docs  = [d for d in docs if (d.get("created_at") or "")[:10] == today]
-        month_docs  = [d for d in docs if (d.get("created_at") or "")[:10] >= month]
-        month_spend = sum(float(d.get("total_amount") or 0) for d in month_docs)
+        today_docs   = [d for d in docs if (d.get("created_at") or "")[:10] == today]
+        month_docs   = [d for d in docs if (d.get("created_at") or "")[:10] >= month]
+        month_spend  = sum(float(d.get("total_amount") or 0) for d in month_docs if d.get("category") in ("purchase","expense", None, ""))
+        month_sales  = sum(float(d.get("total_amount") or 0) for d in month_docs if d.get("category") == "sale")
         return jsonify({
             "total_documents": len(docs),
             "today_scanned":   len(today_docs),
             "month_scanned":   len(month_docs),
             "month_spend":     month_spend,
+            "month_sales":     month_sales,
             "review_pending":  len(pending),
             "company_name":    session.get("company_name", ""),
         })

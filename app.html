@@ -207,6 +207,42 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.3);
   border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
 
+/* ── Category picker ── */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:340px;}
+.cat-btn{background:var(--card);border:2px solid var(--border);border-radius:var(--radius-sm);
+  padding:10px 8px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;text-align:center;transition:all .15s;}
+.cat-btn.active{border-color:var(--blue);background:var(--blue-dim);color:var(--blue);}
+.cat-btn:active{opacity:.8;}
+
+/* ── Filter tabs ── */
+.filter-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;}
+.filter-tab{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:6px 14px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;white-space:nowrap;transition:all .15s;}
+.filter-tab.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+
+/* ── Category badge ── */
+.cat-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:4px;}
+.cat-badge.purchase{background:rgba(59,130,246,.12);color:#3B82F6;}
+.cat-badge.sale{background:rgba(16,185,129,.12);color:#10B981;}
+.cat-badge.expense{background:rgba(245,158,11,.12);color:#F59E0B;}
+.cat-badge.other{background:var(--border);color:var(--text3);}
+
+/* ── Manual entry form ── */
+.form-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.form-section-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:10px;}
+.form-field{margin-bottom:10px;}
+.form-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px;}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:10px 12px;color:var(--text);font-size:14px;outline:none;}
+.form-input:focus{border-color:var(--blue);}
+.form-input::placeholder{color:var(--text3);}
+.form-select{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:10px 12px;color:var(--text);font-size:14px;outline:none;appearance:none;}
+.manual-item-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;}
+.manual-item-row .form-input{margin-bottom:0;}
+.btn-icon{background:none;border:1px solid var(--red);color:var(--red);border-radius:6px;
+  padding:8px 10px;font-size:14px;cursor:pointer;flex-shrink:0;line-height:1;}
+
 /* ── Lightbox ── */
 #lightbox{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:500;
   display:none;align-items:center;justify-content:center;}
@@ -242,9 +278,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
         <div class="lbl">Total Documents</div>
       </div>
       <div class="stat-card">
-        <div class="icon">💰</div>
+        <div class="icon">💸</div>
         <div class="val" id="s-spend" style="font-size:17px;">—</div>
-        <div class="lbl">This Month's Spend</div>
+        <div class="lbl">Month Purchases</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">💰</div>
+        <div class="val" id="s-sales" style="font-size:17px;color:var(--green);">—</div>
+        <div class="lbl">Month Sales</div>
       </div>
       <div class="stat-card" id="review-stat-card" onclick="switchTab('review')" style="cursor:pointer;border-color:var(--yellow);">
         <div class="icon">⚠️</div>
@@ -310,9 +351,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
         📷 Camera
       </button>
     </div>
+    <div id="category-picker" style="display:none;width:100%;max-width:340px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px;letter-spacing:.05em;">What type of document is this?</div>
+      <div class="cat-grid">
+        <button class="cat-btn active" data-cat="purchase" onclick="selectCat(this)">📦 Supplier Purchase</button>
+        <button class="cat-btn" data-cat="sale" onclick="selectCat(this)">💰 Sale</button>
+        <button class="cat-btn" data-cat="expense" onclick="selectCat(this)">🧾 Shop Expense</button>
+        <button class="cat-btn" data-cat="other" onclick="selectCat(this)">📋 Other</button>
+      </div>
+    </div>
     <button class="btn-primary" id="btn-scan" onclick="doScan()" disabled style="width:100%;max-width:340px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       Scan & Extract Data
+    </button>
+    <button class="btn-outline" style="width:100%;max-width:340px;margin-top:4px;" onclick="switchTab('manual')">
+      ✏️ Manual Entry (no receipt)
     </button>
   </div>
 </div>
@@ -345,6 +398,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   <div class="scroll">
     <input class="search-bar" type="text" id="doc-search" placeholder="Search by supplier..."
       oninput="searchDocs()" autocomplete="off">
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-cat="" onclick="setDocFilter(this)">All</button>
+      <button class="filter-tab" data-cat="purchase" onclick="setDocFilter(this)">📦 Purchases</button>
+      <button class="filter-tab" data-cat="sale" onclick="setDocFilter(this)">💰 Sales</button>
+      <button class="filter-tab" data-cat="expense" onclick="setDocFilter(this)">🧾 Expenses</button>
+      <button class="filter-tab" data-cat="other" onclick="setDocFilter(this)">📋 Other</button>
+    </div>
     <div id="docs-list">
       <div class="empty"><div class="processing-spinner" style="margin:0 auto;"></div></div>
     </div>
@@ -437,6 +497,68 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   </div>
 </div>
 
+<!-- ── MANUAL ENTRY ───────────────────────────────────────────────────────── -->
+<div id="screen-manual" class="screen">
+  <div class="app-header">
+    <button class="header-btn" onclick="switchTab('scan')" style="padding:6px 10px;">←</button>
+    <div style="flex:1"><div class="app-header-title">Manual Entry</div></div>
+    <button class="header-btn" style="background:var(--blue);color:white;border-color:var(--blue);"
+      onclick="submitManual()">Save</button>
+  </div>
+  <div class="scroll" id="manual-scroll">
+    <div class="form-section">
+      <div class="form-section-title">Document Type</div>
+      <div class="cat-grid" id="manual-cat-grid">
+        <button class="cat-btn active" data-cat="purchase" onclick="selectManualCat(this)">📦 Supplier Purchase</button>
+        <button class="cat-btn" data-cat="sale" onclick="selectManualCat(this)">💰 Sale</button>
+        <button class="cat-btn" data-cat="expense" onclick="selectManualCat(this)">🧾 Shop Expense</button>
+        <button class="cat-btn" data-cat="other" onclick="selectManualCat(this)">📋 Other</button>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">Document Details</div>
+      <div class="form-field">
+        <label class="form-label">Supplier / Customer Name</label>
+        <input class="form-input" id="m-supplier" type="text" placeholder="e.g. Kampala Phones Ltd">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="form-field">
+          <label class="form-label">Date</label>
+          <input class="form-input" id="m-date" type="date">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Currency</label>
+          <select class="form-select" id="m-currency">
+            <option value="UGX">UGX</option>
+            <option value="USD">USD</option>
+            <option value="KES">KES</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Receipt / Invoice Number (optional)</label>
+        <input class="form-input" id="m-docnum" type="text" placeholder="e.g. INV-0042">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Notes (optional)</label>
+        <input class="form-input" id="m-notes" type="text" placeholder="Any extra info">
+      </div>
+    </div>
+    <div class="form-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="form-section-title" style="margin-bottom:0;">Line Items</div>
+        <button class="header-btn" onclick="addManualItem()" style="font-size:18px;padding:4px 10px;">+</button>
+      </div>
+      <div id="manual-items"></div>
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;font-weight:700;color:var(--text3);">TOTAL</span>
+        <span style="font-size:18px;font-weight:800;color:var(--green);" id="m-total-display">UGX 0</span>
+      </div>
+    </div>
+    <div style="height:20px;"></div>
+  </div>
+</div>
+
 <!-- ── Processing overlay ──────────────────────────────────────────────────── -->
 <div class="processing-overlay" id="processing-overlay">
   <div class="processing-spinner"></div>
@@ -455,9 +577,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
-let currentImage  = null;
-let currentDocId  = null;
-let allDocs       = [];
+let currentImage    = null;
+let currentDocId    = null;
+let allDocs         = [];
+let currentCategory = "";
+let manualCategory  = "purchase";
+let manualItemCount = 0;
 
 // ── Screen switching ───────────────────────────────────────────────────────
 function showScreen(name) {
@@ -471,6 +596,7 @@ function switchTab(name, btn) {
   if (name === "home")   loadHome();
   if (name === "docs")   loadDocs();
   if (name === "review") loadReview();
+  if (name === "manual") initManual();
   if (name === "ask")    {}
 }
 
@@ -497,6 +623,7 @@ async function loadHome() {
     document.getElementById("s-today").textContent       = stats.today_scanned;
     document.getElementById("s-total").textContent       = stats.total_documents;
     document.getElementById("s-spend").textContent       = fmtMoney(stats.month_spend);
+    document.getElementById("s-sales").textContent       = fmtMoney(stats.month_sales || 0);
     document.getElementById("s-review").textContent      = stats.review_pending;
     const badge = document.getElementById("review-badge");
     if (stats.review_pending > 0) {
@@ -519,11 +646,13 @@ function renderDocList(docs, id, mini) {
     </div>`;
     return;
   }
+  const catLabel = {purchase:"📦 Purchase", sale:"💰 Sale", expense:"🧾 Expense", other:"📋 Other"};
   el.innerHTML = docs.map(d => `
     <div class="doc-card" onclick="openDoc('${d.id}')">
       <div class="doc-card-top">
         <span class="doc-type-badge ${d.doc_type||'other'}">${(d.doc_type||'other').replace('_',' ')}</span>
-        <span class="doc-supplier">${esc(d.supplier_name||'Unknown supplier')}</span>
+        <span class="cat-badge ${d.category||'purchase'}">${catLabel[d.category||'purchase']||'📦 Purchase'}</span>
+        <span class="doc-supplier" style="margin-left:4px;">${esc(d.supplier_name||'Unknown')}</span>
         <span class="doc-amount">${d.total_amount ? fmtMoney(d.total_amount, d.currency||'UGX') : ''}</span>
       </div>
       <div class="doc-meta">
@@ -537,11 +666,20 @@ function renderDocList(docs, id, mini) {
 async function loadDocs() {
   const q = (document.getElementById("doc-search")?.value || "").trim();
   try {
-    const url  = "/api/documents?limit=100" + (q ? `&q=${encodeURIComponent(q)}` : "");
+    let url = "/api/documents?limit=100";
+    if (q) url += `&q=${encodeURIComponent(q)}`;
+    if (currentCategory) url += `&category=${encodeURIComponent(currentCategory)}`;
     const docs = await fetch(url).then(r => r.json());
     allDocs    = Array.isArray(docs) ? docs : [];
     renderDocList(allDocs, "docs-list", false);
   } catch(e) { document.getElementById("docs-list").innerHTML = `<div class="empty"><div class="empty-title">Failed to load</div></div>`; }
+}
+
+function setDocFilter(btn) {
+  document.querySelectorAll(".filter-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentCategory = btn.dataset.cat || "";
+  loadDocs();
 }
 
 let searchTimeout;
@@ -605,6 +743,116 @@ async function deleteCurrentDoc() {
   } catch(e) { toast("Failed to delete", "error"); }
 }
 
+// ── Category selection ─────────────────────────────────────────────────────
+function selectCat(btn) {
+  document.querySelectorAll("#category-picker .cat-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function getSelectedCat() {
+  const active = document.querySelector("#category-picker .cat-btn.active");
+  return active ? active.dataset.cat : "purchase";
+}
+
+function selectManualCat(btn) {
+  document.querySelectorAll("#manual-cat-grid .cat-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  manualCategory = btn.dataset.cat;
+}
+
+// ── Manual entry ───────────────────────────────────────────────────────────
+function initManual() {
+  manualCategory  = "purchase";
+  manualItemCount = 0;
+  document.getElementById("m-supplier").value = "";
+  document.getElementById("m-date").value     = new Date().toISOString().slice(0,10);
+  document.getElementById("m-docnum").value   = "";
+  document.getElementById("m-notes").value    = "";
+  document.getElementById("m-currency").value = "UGX";
+  document.querySelectorAll("#manual-cat-grid .cat-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector("#manual-cat-grid .cat-btn[data-cat='purchase']").classList.add("active");
+  document.getElementById("manual-items").innerHTML = "";
+  updateManualTotal();
+  addManualItem();
+}
+
+function addManualItem() {
+  const id  = ++manualItemCount;
+  const div = document.createElement("div");
+  div.className  = "manual-item-row";
+  div.id         = `mi-${id}`;
+  div.innerHTML  = `
+    <div style="flex:2;">
+      <input class="form-input" placeholder="Product name" id="mi-name-${id}" oninput="updateManualTotal()">
+    </div>
+    <div style="flex:1;">
+      <input class="form-input" placeholder="Qty" type="number" id="mi-qty-${id}" oninput="updateManualTotal()">
+    </div>
+    <div style="flex:1;">
+      <input class="form-input" placeholder="Unit price" type="number" id="mi-price-${id}" oninput="updateManualTotal()">
+    </div>
+    <button class="btn-icon" onclick="removeManualItem(${id})">✕</button>
+  `;
+  document.getElementById("manual-items").appendChild(div);
+}
+
+function removeManualItem(id) {
+  const el = document.getElementById(`mi-${id}`);
+  if (el) el.remove();
+  updateManualTotal();
+}
+
+function updateManualTotal() {
+  let total    = 0;
+  const currency = document.getElementById("m-currency")?.value || "UGX";
+  document.querySelectorAll("[id^='mi-qty-']").forEach(qEl => {
+    const n   = qEl.id.replace("mi-qty-","");
+    const qty = parseFloat(qEl.value) || 0;
+    const prc = parseFloat(document.getElementById(`mi-price-${n}`)?.value) || 0;
+    total    += qty * prc;
+  });
+  document.getElementById("m-total-display").textContent = fmtMoney(total, currency);
+}
+
+async function submitManual() {
+  const supplier = document.getElementById("m-supplier").value.trim();
+  if (!supplier) { toast("Enter supplier/customer name", "error"); return; }
+  const items = [];
+  document.querySelectorAll("[id^='mi-name-']").forEach(el => {
+    const n     = el.id.replace("mi-name-","");
+    const name  = el.value.trim();
+    const qty   = parseFloat(document.getElementById(`mi-qty-${n}`)?.value) || null;
+    const price = parseFloat(document.getElementById(`mi-price-${n}`)?.value) || null;
+    if (name) items.push({ product_name: name, quantity: qty, unit_price: price, total_price: qty && price ? qty * price : null });
+  });
+  const total = items.reduce((s,i) => s + (i.total_price||0), 0);
+  const payload = {
+    category:      manualCategory,
+    doc_type:      manualCategory === "sale" ? "receipt" : manualCategory === "expense" ? "receipt" : "invoice",
+    supplier_name: supplier,
+    doc_date:      document.getElementById("m-date").value || null,
+    doc_number:    document.getElementById("m-docnum").value.trim() || null,
+    currency:      document.getElementById("m-currency").value,
+    notes:         document.getElementById("m-notes").value.trim(),
+    total_amount:  total || null,
+    items,
+  };
+  const btn = document.querySelector("#screen-manual .app-header .header-btn:last-child");
+  btn.textContent = "Saving..."; btn.disabled = true;
+  try {
+    const r = await fetch("/api/documents/manual", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (d.success) {
+      toast("Saved successfully", "success");
+      switchTab("docs");
+    } else { toast(d.error || "Failed to save", "error"); }
+  } catch(e) { toast("Network error", "error"); }
+  btn.textContent = "Save"; btn.disabled = false;
+}
+
 // ── File selection & compression ───────────────────────────────────────────
 function handleFileSelect(input) {
   const file = input.files[0];
@@ -623,6 +871,7 @@ function handleFileSelect(input) {
       const preview = document.getElementById("scan-preview");
       preview.src   = currentImage;
       preview.style.display = "block";
+      document.getElementById("category-picker").style.display = "block";
       document.getElementById("btn-scan").disabled = false;
     };
     img.src = e.target.result;
@@ -639,7 +888,7 @@ async function doScan() {
   try {
     const res  = await fetch("/api/documents/scan", {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ image_data: currentImage })
+      body: JSON.stringify({ image_data: currentImage, category: getSelectedCat() })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || "Scan failed");
@@ -648,6 +897,7 @@ async function doScan() {
     // Reset scan screen
     currentImage = null;
     document.getElementById("scan-preview").style.display = "none";
+    document.getElementById("category-picker").style.display = "none";
     document.getElementById("btn-scan").disabled = true;
     document.getElementById("file-input").value = "";
   } catch(e) {
