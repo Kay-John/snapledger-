@@ -99,8 +99,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 .fab:active{transform:scale(.92);}
 
 /* ── Scan screen ── */
-.scan-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:24px 24px max(24px, env(safe-area-inset-bottom));gap:16px;overflow-y:auto;}
+.scan-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:20px 20px max(32px, env(safe-area-inset-bottom));gap:14px;overflow-y:auto;}
 .scan-drop{width:100%;max-width:340px;background:var(--card);border:2px dashed var(--border2);
   border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:border .2s;}
 .scan-drop:active,.scan-drop.drag{border-color:var(--blue);}
@@ -1057,7 +1057,11 @@ function closeLightbox() {
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const r = await fetch("/api/auth/check");
+    if (!r.ok) { window.location.href = "/login"; return; }
+  } catch(e) { window.location.href = "/login"; return; }
   loadHome();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
 });

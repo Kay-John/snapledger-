@@ -64,6 +64,12 @@ def logout():
     session.clear()
     return redirect("/login")
 
+@app.route("/api/auth/check")
+def auth_check():
+    if session.get("logged_in"):
+        return jsonify({"ok": True, "company_name": session.get("company_name","")})
+    return jsonify({"ok": False}), 401
+
 # ── Document scan ─────────────────────────────────────────────────────────────
 
 @app.route("/api/documents/scan", methods=["POST"])
