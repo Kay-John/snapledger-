@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#080B14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SnapLedger">
@@ -100,7 +100,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 
 /* ── Scan screen ── */
 .scan-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:24px;gap:20px;}
+  padding:24px 24px max(24px, env(safe-area-inset-bottom));gap:16px;overflow-y:auto;}
 .scan-drop{width:100%;max-width:340px;background:var(--card);border:2px dashed var(--border2);
   border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:border .2s;}
 .scan-drop:active,.scan-drop.drag{border-color:var(--blue);}
