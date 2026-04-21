@@ -69,7 +69,7 @@ async function doLogin() {
       body: JSON.stringify({company_code: code, username: user, password: pass})
     });
     const data = await r.json();
-    if (data.success) { window.location.href = "/app"; }
+    if (data.success) { window.location.replace("/app"); }
     else { err.textContent = data.error || "Login failed."; }
   } catch(e) { err.textContent = "Network error. Try again."; }
   btn.disabled = false; btn.textContent = "Sign In";

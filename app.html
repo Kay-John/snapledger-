@@ -1057,13 +1057,22 @@ function closeLightbox() {
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
-window.addEventListener("DOMContentLoaded", async () => {
+async function checkAuth() {
   try {
     const r = await fetch("/api/auth/check");
-    if (!r.ok) { window.location.href = "/login"; return; }
-  } catch(e) { window.location.href = "/login"; return; }
+    if (!r.ok) { window.location.replace("/login"); return false; }
+  } catch(e) { window.location.replace("/login"); return false; }
+  return true;
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  if (!await checkAuth()) return;
   loadHome();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+});
+
+window.addEventListener("pageshow", async (e) => {
+  if (e.persisted) { await checkAuth(); }
 });
 </script>
 </body>
