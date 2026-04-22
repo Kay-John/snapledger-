@@ -70,5 +70,5 @@ create index if not exists idx_dict_lookup  on product_dictionary(company_code, 
 -- ════════════════════════════════════════════════════
 -- Sample company (uncomment to create one)
 -- ════════════════════════════════════════════════════
--- insert into companies (company_code, company_name, owner_username, owner_password)
--- values ('PHONES2026', 'Kampala Phone Accessories', 'admin', 'admin123');
+insert into companies (company_code, company_name, owner_username, owner_password)
+values ('PHONES2026', 'Bamulah Phones and Accessories', 'admin', 'admin123');

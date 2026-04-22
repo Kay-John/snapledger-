@@ -4,8 +4,8 @@
   "description": "AI Document Intelligence — scan receipts and invoices instantly",
   "start_url": "/app",
   "display": "standalone",
-  "background_color": "#080B14",
-  "theme_color": "#3B82F6",
+  "background_color": "#EEF2FF",
+  "theme_color": "#2563EB",
   "orientation": "portrait",
   "icons": [
     {

@@ -1,4 +1,4 @@
-const CACHE = "sl-v6";
+const CACHE = "sl-v7";
 const SHELL = ["/", "/app", "/login", "/static/manifest.json"];
 
 self.addEventListener("install", e => {
