@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, session, redirect, Response
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, Response, make_response
 import os, traceback, json, re
 from datetime import date
 
@@ -13,13 +13,19 @@ def home():
 
 @app.route("/login")
 def login_page():
-    return send_from_directory(".", "login.html")
+    resp = make_response(send_from_directory(".", "login.html"))
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    return resp
 
 @app.route("/app")
 def app_page():
     if not session.get("logged_in"):
         return redirect("/login")
-    return send_from_directory(".", "app.html")
+    resp = make_response(send_from_directory(".", "app.html"))
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    return resp
 
 @app.route("/static/<path:filename>")
 def static_files(filename):
